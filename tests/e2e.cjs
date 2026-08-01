@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const http = require('node:http');
 const path = require('node:path');
@@ -6,6 +7,7 @@ const { chromium } = require('playwright');
 
 const root = path.resolve(__dirname, '..');
 const outputDir = path.join(root, 'test-results', 'screenshots');
+const approvedManifest = JSON.parse(fs.readFileSync(path.join(root, 'assets', 'approved-mockups.json'), 'utf8'));
 const pages = [
   { path: '/index.html', slug: 'homepage', mockups: 6 },
   { path: '/books.html', slug: 'books', mockups: 3 },
@@ -96,6 +98,60 @@ function assertInside(inner, outer, label, tolerance = 0.75) {
   assert.ok(inner.bottom <= outer.bottom + tolerance, `${label} crosses the bottom edge`);
 }
 
+function sha256(filePath) {
+  return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+}
+
+function assertApprovedAssetFiles() {
+  assert.equal(sha256(path.join(root, approvedManifest.source)), approvedManifest.sourceSha256, 'Approved homepage source hash changed');
+  for (const [name, group] of Object.entries(approvedManifest.groups)) {
+    assert.equal(sha256(path.join(root, group.asset)), group.assetSha256, `${name} approved mockup asset hash changed`);
+  }
+}
+
+async function assertApprovedPixelCrops(page) {
+  const comparisons = await page.evaluate(async manifest => {
+    const load = source => new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error(`Unable to load ${source}`));
+      image.src = `/${source}`;
+    });
+    const source = await load(manifest.source);
+    const results = [];
+    for (const [name, group] of Object.entries(manifest.groups)) {
+      const approved = await load(group.asset);
+      const sourceCanvas = document.createElement('canvas');
+      const approvedCanvas = document.createElement('canvas');
+      sourceCanvas.width = approvedCanvas.width = group.width;
+      sourceCanvas.height = approvedCanvas.height = group.height;
+      const sourceContext = sourceCanvas.getContext('2d', { willReadFrequently: true });
+      const approvedContext = approvedCanvas.getContext('2d', { willReadFrequently: true });
+      sourceContext.drawImage(source, group.x, group.y, group.width, group.height, 0, 0, group.width, group.height);
+      approvedContext.drawImage(approved, 0, 0);
+      const sourcePixels = sourceContext.getImageData(0, 0, group.width, group.height).data;
+      const approvedPixels = approvedContext.getImageData(0, 0, group.width, group.height).data;
+      let mismatches = 0;
+      for (let index = 0; index < sourcePixels.length; index += 1) {
+        if (sourcePixels[index] !== approvedPixels[index]) mismatches += 1;
+      }
+      results.push({
+        name,
+        mismatches,
+        naturalWidth: approved.naturalWidth,
+        naturalHeight: approved.naturalHeight
+      });
+    }
+    return results;
+  }, approvedManifest);
+  for (const result of comparisons) {
+    const expected = approvedManifest.groups[result.name];
+    assert.equal(result.naturalWidth, expected.width, `${result.name} approved crop width changed`);
+    assert.equal(result.naturalHeight, expected.height, `${result.name} approved crop height changed`);
+    assert.equal(result.mismatches, 0, `${result.name} is not a pixel-exact crop of the approved homepage reference`);
+  }
+}
+
 async function assertMockups(page, expectedCount, pageSlug) {
   if (pageSlug === 'homepage') {
     const section = page.locator('.reference:visible');
@@ -113,6 +169,10 @@ async function assertMockups(page, expectedCount, pageSlug) {
           name: node.dataset.mockupGroup,
           devices: node.dataset.devices,
           elements: node.dataset.elements,
+          approvedGroup: node.dataset.approvedGroup || null,
+          approvedAsset: node.dataset.approvedAsset || null,
+          sourceRect: node.dataset.sourceRect || null,
+          renderedAsset: node.querySelector('img')?.getAttribute('src') || null,
           rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height },
           parent: { left: parent.left, top: parent.top, right: parent.right, bottom: parent.bottom },
           viewport: { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight }
@@ -124,6 +184,28 @@ async function assertMockups(page, expectedCount, pageSlug) {
       assertInside(group.rect, group.viewport, `${group.name} within viewport`);
       assert.ok(group.parent.right - group.rect.right >= 2, `${group.name} has insufficient right-side clearance`);
       data.push(group);
+    }
+    const approvedGroups = data.filter(group => group.approvedGroup);
+    assert.equal(approvedGroups.length, 3, 'The visible homepage Our Books section must expose the three approved groups');
+    for (const group of approvedGroups) {
+      const manifestGroup = approvedManifest.groups[group.approvedGroup];
+      assert.ok(manifestGroup, `Unknown approved homepage group ${group.approvedGroup}`);
+      assert.equal(group.approvedAsset, manifestGroup.asset, `${group.name} does not identify its exact approved asset`);
+      assert.equal(group.sourceRect, `${manifestGroup.x} ${manifestGroup.y} ${manifestGroup.width} ${manifestGroup.height}`, `${group.name} approved crop coordinates changed`);
+      if (group.renderedAsset) assert.equal(group.renderedAsset, manifestGroup.asset, `${group.name} mobile overlay does not render the approved crop`);
+      for (const effect of ['pedestal', 'glow', 'shadow']) assert.ok(group.elements.split(' ').includes(effect), `${group.name} approved composition is missing ${effect}`);
+    }
+    const visibleReference = await section.evaluate(node => ({
+      mobile: node.classList.contains('mobile-ref'),
+      source: node.querySelector(':scope > img')?.getAttribute('src'),
+      sourceSha: node.querySelector(':scope > img')?.dataset.approvedSourceSha || null,
+      approvedImages: [...node.querySelectorAll('.approved-mobile-group img')].map(image => image.getAttribute('src'))
+    }));
+    if (visibleReference.mobile) {
+      assert.deepEqual(visibleReference.approvedImages.sort(), Object.values(approvedManifest.groups).map(group => group.asset).sort(), 'Mobile homepage does not render all three exact approved groups');
+    } else {
+      assert.equal(visibleReference.source, approvedManifest.source, 'Desktop homepage no longer renders the approved reference');
+      assert.equal(visibleReference.sourceSha, approvedManifest.sourceSha256, 'Desktop homepage approved reference hash metadata changed');
     }
     const mainHeights = data.slice(0, 3).map(group => group.rect.height);
     assert.ok(Math.max(...mainHeights) - Math.min(...mainHeights) < 1, 'Main-stage mockup groups must use matching heights');
@@ -161,42 +243,12 @@ async function assertMockups(page, expectedCount, pageSlug) {
       const box = boxNode.getBoundingClientRect();
       const style = getComputedStyle(image);
       const boxStyle = getComputedStyle(boxNode);
-      const maxSample = 512;
-      const scale = Math.min(maxSample / image.naturalWidth, maxSample / image.naturalHeight, 1);
-      const sampleWidth = Math.max(1, Math.round(image.naturalWidth * scale));
-      const sampleHeight = Math.max(1, Math.round(image.naturalHeight * scale));
-      const canvas = document.createElement('canvas');
-      canvas.width = sampleWidth;
-      canvas.height = sampleHeight;
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-      context.drawImage(image, 0, 0, sampleWidth, sampleHeight);
-      const pixels = context.getImageData(0, 0, sampleWidth, sampleHeight).data;
-      let minX = sampleWidth;
-      let minY = sampleHeight;
-      let maxX = -1;
-      let maxY = -1;
-      for (let y = 0; y < sampleHeight; y += 1) {
-        for (let x = 0; x < sampleWidth; x += 1) {
-          if (pixels[(y * sampleWidth + x) * 4 + 3] > 12) {
-            minX = Math.min(minX, x);
-            minY = Math.min(minY, y);
-            maxX = Math.max(maxX, x);
-            maxY = Math.max(maxY, y);
-          }
-        }
-      }
-      const alphaBounds = maxX >= 0 ? {
-        left: minX / sampleWidth,
-        top: minY / sampleHeight,
-        right: (maxX + 1) / sampleWidth,
-        bottom: (maxY + 1) / sampleHeight
-      } : null;
-      const effects = [...boxNode.querySelectorAll('[data-mockup-element]')].map(node => {
-        const effectRect = node.getBoundingClientRect();
-        return { name: node.dataset.mockupElement, rect: { left: effectRect.left, top: effectRect.top, right: effectRect.right, bottom: effectRect.bottom } };
-      });
       return {
         name: boxNode.dataset.mockupName,
+        approvedGroup: boxNode.dataset.approvedGroup,
+        approvedAsset: image.dataset.approvedAsset,
+        elements: image.dataset.elements,
+        source: image.getAttribute('src'),
         alt: image.alt,
         devices: image.dataset.devices,
         complete: image.complete,
@@ -212,14 +264,19 @@ async function assertMockups(page, expectedCount, pageSlug) {
         clientHeight: boxNode.clientHeight,
         rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height },
         box: { left: box.left, top: box.top, right: box.right, bottom: box.bottom },
-        viewport: { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight },
-        alphaBounds,
-        effects
+        viewport: { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight }
       };
     });
+    const manifestGroup = approvedManifest.groups[mockup.approvedGroup];
+    assert.ok(manifestGroup, `${mockup.name} does not identify an approved Our Books group`);
     assert.ok(mockup.complete && mockup.naturalWidth > 0 && mockup.naturalHeight > 0, `Mockup source is incomplete: ${mockup.alt}`);
-    assert.match(mockup.alt, /hardcover, iPad and iPhone/i, `Mockup alt text must identify all three devices: ${mockup.alt}`);
+    assert.match(mockup.alt, /Exact approved.*hardcover, iPad and iPhone.*pedestal, glow, and shadow/i, `Mockup alt text must identify the complete approved composition: ${mockup.alt}`);
     assert.equal(mockup.devices, 'hardcover ipad iphone', `${mockup.name} must identify all three devices`);
+    assert.equal(mockup.elements, 'hardcover ipad iphone pedestal glow shadow', `${mockup.name} must preserve every approved visual element`);
+    assert.equal(mockup.approvedAsset, manifestGroup.asset, `${mockup.name} approved asset metadata changed`);
+    assert.equal(mockup.source, manifestGroup.asset, `${mockup.name} is not rendering the exact approved asset`);
+    assert.equal(mockup.naturalWidth, manifestGroup.width, `${mockup.name} approved source width changed`);
+    assert.equal(mockup.naturalHeight, manifestGroup.height, `${mockup.name} approved source height changed`);
     assert.equal(mockup.fit, 'contain', `Mockup must use object-fit: contain: ${mockup.alt}`);
     assert.equal(mockup.transform, 'none', `Mockup must not be stretched or transformed: ${mockup.alt}`);
     assert.ok(['hidden', 'clip'].includes(mockup.overflowX) && ['hidden', 'clip'].includes(mockup.overflowY), `${mockup.name} container must contain visual overflow`);
@@ -227,35 +284,32 @@ async function assertMockups(page, expectedCount, pageSlug) {
     assertInside(mockup.box, mockup.viewport, `${mockup.name} complete stage within viewport`);
     assertInside(mockup.rect, mockup.box, `${mockup.name} image within its container`);
     assertInside(mockup.rect, mockup.viewport, `${mockup.name} image within viewport`);
-    assert.ok(mockup.box.right - mockup.rect.right >= 2, `${mockup.name} image has insufficient right-side clearance`);
-    assert.ok(mockup.alphaBounds, `${mockup.name} transparent source content could not be measured`);
-    for (const [edge, margin] of Object.entries({ left: mockup.alphaBounds.left, top: mockup.alphaBounds.top, right: 1 - mockup.alphaBounds.right, bottom: 1 - mockup.alphaBounds.bottom })) {
-      assert.ok(margin >= 0.02, `${mockup.name} source content touches the ${edge} edge (${(margin * 100).toFixed(2)}% clearance)`);
-    }
-    const visualBounds = {
-      left: mockup.rect.left + mockup.alphaBounds.left * mockup.rect.width,
-      top: mockup.rect.top + mockup.alphaBounds.top * mockup.rect.height,
-      right: mockup.rect.left + mockup.alphaBounds.right * mockup.rect.width,
-      bottom: mockup.rect.top + mockup.alphaBounds.bottom * mockup.rect.height
+    const clearances = {
+      left: mockup.rect.left - mockup.box.left,
+      top: mockup.rect.top - mockup.box.top,
+      right: mockup.box.right - mockup.rect.right,
+      bottom: mockup.box.bottom - mockup.rect.bottom
     };
-    assertInside(visualBounds, mockup.box, `${mockup.name} visible hardcover/iPad/iPhone pixels within container`);
-    assertInside(visualBounds, mockup.viewport, `${mockup.name} visible hardcover/iPad/iPhone pixels within viewport`);
-    assert.ok(mockup.box.right - visualBounds.right >= 4, `${mockup.name} visible right edge has insufficient clearance`);
-    assert.deepEqual(mockup.effects.map(effect => effect.name).sort(), ['glow', 'pedestal', 'shadow'], `${mockup.name} must include glow, pedestal, and shadow elements`);
-    for (const effect of mockup.effects) {
-      assertInside(effect.rect, mockup.box, `${mockup.name} ${effect.name} within container`);
-      assertInside(effect.rect, mockup.viewport, `${mockup.name} ${effect.name} within viewport`);
-    }
+    for (const [edge, clearance] of Object.entries(clearances)) assert.ok(clearance >= 2, `${mockup.name} exact approved composition has insufficient ${edge}-side clearance`);
+    assert.ok(Math.abs(mockup.rect.width / mockup.rect.height - mockup.naturalWidth / mockup.naturalHeight) < 0.01, `${mockup.name} approved composition proportions changed`);
   }
 }
 
-async function captureOurBooks(page, layout) {
+async function captureApprovedArea(page, pageSlug, layout) {
   if (!['desktop', 'mobile'].includes(layout.name)) return null;
-  const section = page.locator('.reference:visible [data-our-books-section]');
-  assert.equal(await section.count(), 1, `Expected one focused Our Books marker for ${layout.name}`);
-  await section.scrollIntoViewIfNeeded();
-  const screenshot = path.join(outputDir, `our-books-${layout.name}-focused.png`);
-  await section.screenshot({ path: screenshot, animations: 'disabled' });
+  const selectors = {
+    homepage: '.reference:visible [data-our-books-section]',
+    books: '.page-main',
+    unshakable: '.detail-panel',
+    beginners: '.detail-panel',
+    experts: '.detail-panel'
+  };
+  if (!selectors[pageSlug]) return null;
+  const area = page.locator(selectors[pageSlug]);
+  assert.equal(await area.count(), 1, `Expected one focused approved area for ${pageSlug}-${layout.name}`);
+  await area.scrollIntoViewIfNeeded();
+  const screenshot = path.join(outputDir, `approved-${pageSlug}-${layout.name}-focused.png`);
+  await area.screenshot({ path: screenshot, animations: 'disabled', scale: 'device' });
   return screenshot;
 }
 
@@ -291,6 +345,7 @@ async function assertForm(page, pageSlug, layout) {
 }
 
 async function run() {
+  assertApprovedAssetFiles();
   fs.mkdirSync(outputDir, { recursive: true });
   const requestedPages = new Set((process.env.TEST_PAGES || '').split(',').filter(Boolean));
   const requestedLayout = process.env.TEST_LAYOUT || '';
@@ -304,6 +359,7 @@ async function run() {
   const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined;
   const results = [];
   const failures = [];
+  let approvedPixelsVerified = false;
 
   try {
     for (const layout of activeLayouts) {
@@ -312,7 +368,7 @@ async function run() {
         const browser = await chromium.launch({ headless: true, executablePath });
         let context;
         try {
-          context = await browser.newContext({ viewport: layout.viewport, deviceScaleFactor: 1, isMobile: layout.isMobile });
+          context = await browser.newContext({ viewport: layout.viewport, deviceScaleFactor: ['desktop', 'mobile'].includes(layout.name) ? 2 : 1, isMobile: layout.isMobile });
           const page = await context.newPage();
           const consoleErrors = [];
           const runtimeErrors = [];
@@ -339,11 +395,15 @@ async function run() {
             assert.ok(overflow <= 0, `${label} has ${overflow}px of horizontal overflow`);
             await assertInternalLinks(page, baseURL);
             await assertImages(page);
+            if (!approvedPixelsVerified) {
+              await assertApprovedPixelCrops(page);
+              approvedPixelsVerified = true;
+            }
             await assertMockups(page, entry.mockups, entry.slug);
 
             const screenshot = path.join(outputDir, `${label}.png`);
             await page.screenshot({ path: screenshot, fullPage: true, animations: 'disabled' });
-            const focusedScreenshot = entry.slug === 'homepage' ? await captureOurBooks(page, layout) : null;
+            const focusedScreenshot = await captureApprovedArea(page, entry.slug, layout);
             await assertNavigation(page, entry.slug, layout);
             await assertForm(page, entry.slug, layout);
 
