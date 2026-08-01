@@ -21,9 +21,9 @@ const pages = [
   { path: '/contact.html', slug: 'contact', mockups: 0 }
 ];
 const layouts = [
-  { name: 'desktop', viewport: { width: 1672, height: 941 }, isMobile: false, homepageRef: 'desktop' },
-  { name: 'tablet', viewport: { width: 820, height: 1180 }, isMobile: true, homepageRef: 'mobile' },
-  { name: 'mobile', viewport: { width: 430, height: 932 }, isMobile: true, homepageRef: 'mobile' }
+  { name: 'desktop', viewport: { width: 1672, height: 941 }, deviceScaleFactor: 2, isMobile: false, homepageRef: 'desktop' },
+  { name: 'tablet', viewport: { width: 820, height: 1180 }, deviceScaleFactor: 1, isMobile: true, homepageRef: 'mobile' },
+  { name: 'mobile', viewport: { width: 430, height: 932 }, deviceScaleFactor: 2, isMobile: true, homepageRef: 'mobile' }
 ];
 const contentTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -106,6 +106,7 @@ function assertApprovedAssetFiles() {
   assert.equal(sha256(path.join(root, approvedManifest.source)), approvedManifest.sourceSha256, 'Approved homepage source hash changed');
   for (const [name, group] of Object.entries(approvedManifest.groups)) {
     assert.equal(sha256(path.join(root, group.asset)), group.assetSha256, `${name} approved mockup asset hash changed`);
+    assert.equal(sha256(path.join(root, group.highResolutionAsset)), group.highResolutionAssetSha256, `${name} original 8K mockup source hash changed`);
   }
 }
 
@@ -165,14 +166,32 @@ async function assertMockups(page, expectedCount, pageSlug) {
       const group = await marker.evaluate(node => {
         const rect = node.getBoundingClientRect();
         const parent = node.parentElement.getBoundingClientRect();
+        const image = node.querySelector('img');
+        const imageRect = image?.getBoundingClientRect();
+        const imageStyle = image ? getComputedStyle(image) : null;
         return {
           name: node.dataset.mockupGroup,
           devices: node.dataset.devices,
           elements: node.dataset.elements,
           approvedGroup: node.dataset.approvedGroup || null,
           approvedAsset: node.dataset.approvedAsset || null,
+          qualitySource: node.dataset.qualitySource || null,
+          referenceAsset: node.dataset.referenceAsset || null,
           sourceRect: node.dataset.sourceRect || null,
-          renderedAsset: node.querySelector('img')?.getAttribute('src') || null,
+          renderedAsset: image?.getAttribute('src') || null,
+          image: image ? {
+            currentSrc: image.currentSrc,
+            naturalWidth: image.naturalWidth,
+            naturalHeight: image.naturalHeight,
+            renderedWidth: imageRect.width,
+            renderedHeight: imageRect.height,
+            srcset: image.getAttribute('srcset') || '',
+            sizes: image.getAttribute('sizes') || '',
+            objectFit: imageStyle.objectFit,
+            filter: imageStyle.filter,
+            transform: imageStyle.transform,
+            devicePixelRatio: window.devicePixelRatio
+          } : null,
           rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height },
           parent: { left: parent.left, top: parent.top, right: parent.right, bottom: parent.bottom },
           viewport: { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight }
@@ -190,9 +209,25 @@ async function assertMockups(page, expectedCount, pageSlug) {
     for (const group of approvedGroups) {
       const manifestGroup = approvedManifest.groups[group.approvedGroup];
       assert.ok(manifestGroup, `Unknown approved homepage group ${group.approvedGroup}`);
-      assert.equal(group.approvedAsset, manifestGroup.asset, `${group.name} does not identify its exact approved asset`);
       assert.equal(group.sourceRect, `${manifestGroup.x} ${manifestGroup.y} ${manifestGroup.width} ${manifestGroup.height}`, `${group.name} approved crop coordinates changed`);
-      if (group.renderedAsset) assert.equal(group.renderedAsset, manifestGroup.asset, `${group.name} mobile overlay does not render the approved crop`);
+      if (group.renderedAsset) {
+        assert.equal(group.approvedAsset, manifestGroup.highResolutionAsset, `${group.name} does not identify the original 8K source`);
+        assert.equal(group.referenceAsset, manifestGroup.asset, `${group.name} lost its approved desktop reference mapping`);
+        assert.equal(group.renderedAsset, manifestGroup.highResolutionAsset, `${group.name} mobile overlay does not render the original 8K source`);
+        assert.ok(group.image.currentSrc.endsWith(`/${manifestGroup.highResolutionAsset}`), `${group.name} currentSrc selected a stale or lower-resolution source`);
+        assert.equal(group.image.naturalWidth, manifestGroup.highResolutionWidth, `${group.name} original source width changed`);
+        assert.equal(group.image.naturalHeight, manifestGroup.highResolutionHeight, `${group.name} original source height changed`);
+        assert.equal(group.image.srcset, '', `${group.name} must not expose low-resolution srcset candidates`);
+        assert.equal(group.image.sizes, '', `${group.name} must not expose stale responsive sizes`);
+        assert.equal(group.image.objectFit, 'contain', `${group.name} must use object-fit: contain`);
+        assert.equal(group.image.filter, 'none', `${group.name} must not use an image filter`);
+        assert.equal(group.image.transform, 'none', `${group.name} must not use transform enlargement`);
+        assert.ok(group.image.naturalWidth / group.image.renderedWidth >= group.image.devicePixelRatio, `${group.name} source width does not support DPR ${group.image.devicePixelRatio}`);
+        assert.ok(group.image.naturalHeight / group.image.renderedHeight >= group.image.devicePixelRatio, `${group.name} source height does not support DPR ${group.image.devicePixelRatio}`);
+      } else {
+        assert.equal(group.approvedAsset, manifestGroup.asset, `${group.name} desktop approved crop mapping changed`);
+        assert.equal(group.qualitySource, manifestGroup.highResolutionAsset, `${group.name} desktop quality-source mapping changed`);
+      }
       for (const effect of ['pedestal', 'glow', 'shadow']) assert.ok(group.elements.split(' ').includes(effect), `${group.name} approved composition is missing ${effect}`);
     }
     const visibleReference = await section.evaluate(node => ({
@@ -202,7 +237,7 @@ async function assertMockups(page, expectedCount, pageSlug) {
       approvedImages: [...node.querySelectorAll('.approved-mobile-group img')].map(image => image.getAttribute('src'))
     }));
     if (visibleReference.mobile) {
-      assert.deepEqual(visibleReference.approvedImages.sort(), Object.values(approvedManifest.groups).map(group => group.asset).sort(), 'Mobile homepage does not render all three exact approved groups');
+      assert.deepEqual(visibleReference.approvedImages.sort(), Object.values(approvedManifest.groups).map(group => group.highResolutionAsset).sort(), 'Mobile homepage does not render all three original 8K groups');
     } else {
       assert.equal(visibleReference.source, approvedManifest.source, 'Desktop homepage no longer renders the approved reference');
       assert.equal(visibleReference.sourceSha, approvedManifest.sourceSha256, 'Desktop homepage approved reference hash metadata changed');
@@ -228,7 +263,7 @@ async function assertMockups(page, expectedCount, pageSlug) {
     for (const effect of ['pedestal', 'glow', 'shadow']) assert.ok(stageGeometry.elements.split(' ').includes(effect), `Homepage stage is missing ${effect} metadata`);
     assertInside(stageGeometry.rect, stageGeometry.parent, 'Homepage pedestal/glow/shadow stage within approved image');
     assertInside(stageGeometry.rect, stageGeometry.viewport, 'Homepage pedestal/glow/shadow stage within viewport');
-    return;
+    return approvedGroups.map(group => ({ page: pageSlug, group: group.approvedGroup, ...group.image })).filter(entry => entry.currentSrc);
   }
 
   const containers = page.locator('[data-mockup-container]');
@@ -243,19 +278,38 @@ async function assertMockups(page, expectedCount, pageSlug) {
       const box = boxNode.getBoundingClientRect();
       const style = getComputedStyle(image);
       const boxStyle = getComputedStyle(boxNode);
+      const sourceAspect = image.naturalWidth / image.naturalHeight;
+      const renderedAspect = rect.width / rect.height;
+      const contentWidth = renderedAspect > sourceAspect ? rect.height * sourceAspect : rect.width;
+      const contentHeight = renderedAspect > sourceAspect ? rect.height : rect.width / sourceAspect;
+      const contentLeft = rect.left + (rect.width - contentWidth) / 2;
+      const contentTop = rect.top + (rect.height - contentHeight) / 2;
+      const effects = [...boxNode.querySelectorAll('.mockup-glow,.mockup-pedestal,.mockup-shadow')].map(effect => {
+        const effectRect = effect.getBoundingClientRect();
+        return {
+          className: effect.className,
+          rect: { left: effectRect.left, top: effectRect.top, right: effectRect.right, bottom: effectRect.bottom }
+        };
+      });
       return {
         name: boxNode.dataset.mockupName,
         approvedGroup: boxNode.dataset.approvedGroup,
         approvedAsset: image.dataset.approvedAsset,
         elements: image.dataset.elements,
         source: image.getAttribute('src'),
+        currentSrc: image.currentSrc,
+        srcset: image.getAttribute('srcset') || '',
+        sizes: image.getAttribute('sizes') || '',
         alt: image.alt,
         devices: image.dataset.devices,
         complete: image.complete,
         naturalWidth: image.naturalWidth,
         naturalHeight: image.naturalHeight,
         fit: style.objectFit,
+        filter: style.filter,
         transform: style.transform,
+        imageRendering: style.imageRendering,
+        devicePixelRatio: window.devicePixelRatio,
         overflowX: boxStyle.overflowX,
         overflowY: boxStyle.overflowY,
         scrollWidth: boxNode.scrollWidth,
@@ -263,8 +317,10 @@ async function assertMockups(page, expectedCount, pageSlug) {
         clientWidth: boxNode.clientWidth,
         clientHeight: boxNode.clientHeight,
         rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height },
+        contentRect: { left: contentLeft, top: contentTop, right: contentLeft + contentWidth, bottom: contentTop + contentHeight, width: contentWidth, height: contentHeight },
         box: { left: box.left, top: box.top, right: box.right, bottom: box.bottom },
-        viewport: { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight }
+        viewport: { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight },
+        effects
       };
     });
     const manifestGroup = approvedManifest.groups[mockup.approvedGroup];
@@ -273,17 +329,25 @@ async function assertMockups(page, expectedCount, pageSlug) {
     assert.match(mockup.alt, /Exact approved.*hardcover, iPad and iPhone.*pedestal, glow, and shadow/i, `Mockup alt text must identify the complete approved composition: ${mockup.alt}`);
     assert.equal(mockup.devices, 'hardcover ipad iphone', `${mockup.name} must identify all three devices`);
     assert.equal(mockup.elements, 'hardcover ipad iphone pedestal glow shadow', `${mockup.name} must preserve every approved visual element`);
-    assert.equal(mockup.approvedAsset, manifestGroup.asset, `${mockup.name} approved asset metadata changed`);
-    assert.equal(mockup.source, manifestGroup.asset, `${mockup.name} is not rendering the exact approved asset`);
-    assert.equal(mockup.naturalWidth, manifestGroup.width, `${mockup.name} approved source width changed`);
-    assert.equal(mockup.naturalHeight, manifestGroup.height, `${mockup.name} approved source height changed`);
+    assert.equal(mockup.approvedAsset, manifestGroup.highResolutionAsset, `${mockup.name} original source metadata changed`);
+    assert.equal(mockup.source, manifestGroup.highResolutionAsset, `${mockup.name} is not rendering the original 8K asset`);
+    assert.ok(mockup.currentSrc.endsWith(`/${manifestGroup.highResolutionAsset}`), `${mockup.name} currentSrc selected a stale or lower-resolution source`);
+    assert.equal(mockup.naturalWidth, manifestGroup.highResolutionWidth, `${mockup.name} original source width changed`);
+    assert.equal(mockup.naturalHeight, manifestGroup.highResolutionHeight, `${mockup.name} original source height changed`);
+    assert.equal(mockup.srcset, '', `${mockup.name} must not expose low-resolution srcset candidates`);
+    assert.equal(mockup.sizes, '', `${mockup.name} must not expose stale responsive sizes`);
     assert.equal(mockup.fit, 'contain', `Mockup must use object-fit: contain: ${mockup.alt}`);
+    assert.equal(mockup.filter, 'none', `Mockup must not use blur, sharpening, or other filters: ${mockup.alt}`);
     assert.equal(mockup.transform, 'none', `Mockup must not be stretched or transformed: ${mockup.alt}`);
     assert.ok(['hidden', 'clip'].includes(mockup.overflowX) && ['hidden', 'clip'].includes(mockup.overflowY), `${mockup.name} container must contain visual overflow`);
     assert.ok(mockup.scrollWidth <= mockup.clientWidth + 1 && mockup.scrollHeight <= mockup.clientHeight + 1, `${mockup.name} container has internal overflow`);
     assertInside(mockup.box, mockup.viewport, `${mockup.name} complete stage within viewport`);
     assertInside(mockup.rect, mockup.box, `${mockup.name} image within its container`);
     assertInside(mockup.rect, mockup.viewport, `${mockup.name} image within viewport`);
+    assertInside(mockup.contentRect, mockup.box, `${mockup.name} complete 8K device composition within its container`);
+    assertInside(mockup.contentRect, mockup.viewport, `${mockup.name} complete 8K device composition within viewport`);
+    assert.equal(mockup.effects.length, 3, `${mockup.name} must render pedestal, glow, and shadow as complete stage layers`);
+    for (const effect of mockup.effects) assertInside(effect.rect, mockup.box, `${mockup.name} ${effect.className} within its container`);
     const clearances = {
       left: mockup.rect.left - mockup.box.left,
       top: mockup.rect.top - mockup.box.top,
@@ -291,12 +355,31 @@ async function assertMockups(page, expectedCount, pageSlug) {
       bottom: mockup.box.bottom - mockup.rect.bottom
     };
     for (const [edge, clearance] of Object.entries(clearances)) assert.ok(clearance >= 2, `${mockup.name} exact approved composition has insufficient ${edge}-side clearance`);
-    assert.ok(Math.abs(mockup.rect.width / mockup.rect.height - mockup.naturalWidth / mockup.naturalHeight) < 0.01, `${mockup.name} approved composition proportions changed`);
+    assert.ok(mockup.naturalWidth / mockup.contentRect.width >= mockup.devicePixelRatio, `${mockup.name} source width does not support DPR ${mockup.devicePixelRatio}`);
+    assert.ok(mockup.naturalHeight / mockup.contentRect.height >= mockup.devicePixelRatio, `${mockup.name} source height does not support DPR ${mockup.devicePixelRatio}`);
   }
+  return await containers.evaluateAll((nodes, slug) => nodes.map(boxNode => {
+    const image = boxNode.querySelector('.mockup-image');
+    const rect = image.getBoundingClientRect();
+    return {
+      page: slug,
+      group: boxNode.dataset.approvedGroup,
+      currentSrc: image.currentSrc,
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight,
+      renderedWidth: rect.width,
+      renderedHeight: rect.height,
+      srcset: image.getAttribute('srcset') || '',
+      sizes: image.getAttribute('sizes') || '',
+      objectFit: getComputedStyle(image).objectFit,
+      filter: getComputedStyle(image).filter,
+      transform: getComputedStyle(image).transform,
+      devicePixelRatio: window.devicePixelRatio
+    };
+  }), pageSlug);
 }
 
 async function captureApprovedArea(page, pageSlug, layout) {
-  if (!['desktop', 'mobile'].includes(layout.name)) return null;
   const selectors = {
     homepage: '.reference:visible [data-our-books-section]',
     books: '.page-main',
@@ -368,7 +451,7 @@ async function run() {
         const browser = await chromium.launch({ headless: true, executablePath });
         let context;
         try {
-          context = await browser.newContext({ viewport: layout.viewport, deviceScaleFactor: ['desktop', 'mobile'].includes(layout.name) ? 2 : 1, isMobile: layout.isMobile });
+          context = await browser.newContext({ viewport: layout.viewport, deviceScaleFactor: layout.deviceScaleFactor, isMobile: layout.isMobile });
           const page = await context.newPage();
           const consoleErrors = [];
           const runtimeErrors = [];
@@ -399,7 +482,7 @@ async function run() {
               await assertApprovedPixelCrops(page);
               approvedPixelsVerified = true;
             }
-            await assertMockups(page, entry.mockups, entry.slug);
+            const imageTelemetry = await assertMockups(page, entry.mockups, entry.slug);
 
             const screenshot = path.join(outputDir, `${label}.png`);
             await page.screenshot({ path: screenshot, fullPage: true, animations: 'disabled' });
@@ -415,7 +498,9 @@ async function run() {
               status: 'passed',
               screenshot: path.relative(root, screenshot),
               focusedScreenshot: focusedScreenshot ? path.relative(root, focusedScreenshot) : null,
-              overflow
+              overflow,
+              deviceScaleFactor: layout.deviceScaleFactor,
+              imageTelemetry
             });
             process.stdout.write(`PASS ${label}\n`);
           } catch (error) {
