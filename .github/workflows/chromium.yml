@@ -35,7 +35,7 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run desktop and mobile Chromium QA
+      - name: Run desktop, tablet, and mobile Chromium QA
         run: pnpm run test:chromium
 
       - name: Upload page screenshots and report
