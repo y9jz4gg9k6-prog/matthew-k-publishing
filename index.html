@@ -23,6 +23,8 @@
     .hit { cursor: pointer; }
     .hit:focus-visible { outline: 2px solid #60a9ff; outline-offset: 2px; border-radius: 8px; }
     .mockup-marker, .stage-marker, .our-books-marker { z-index: 1; pointer-events: none; }
+    .approved-mobile-group { z-index: 3; overflow: hidden; background: #061421; }
+    .approved-mobile-group img { width: 100%; height: 100%; object-fit: contain; object-position: center; transform: none; filter: none; }
     .menu-panel { position: absolute; z-index: 40; display: none; width: 230px; padding: 10px; background: rgba(5, 15, 27, .99); border: 1px solid rgba(76, 143, 230, .34); border-radius: 12px; box-shadow: 0 18px 50px rgba(0, 0, 0, .6); line-height: 1.2; }
     .menu-panel.show { display: block; }
     .menu-panel a { display: block; color: #eef5ff; padding: 11px 12px; border-radius: 8px; font-size: 14px; font-weight: 700; }
@@ -47,7 +49,7 @@
 <body>
   <main class="pixel-page">
     <section class="reference desktop-ref" aria-label="Matthew K Publishing approved desktop homepage">
-      <img src="assets/homepage-approved-v33.png" width="1672" height="941" alt="Matthew K Publishing homepage with six complete hardcover, iPad, and iPhone book mockup groups" draggable="false">
+      <img src="assets/homepage-approved-v33.png" width="1672" height="941" data-approved-source-sha="9ac8fe969544201e084a3e862d4d21632855bb9003e38cfa53019579a9f35da3" alt="Matthew K Publishing homepage with six complete hardcover, iPad, and iPhone book mockup groups" draggable="false">
       <a class="hit" href="index.html" aria-label="Matthew K Publishing home" style="left:2.6%;top:1.3%;width:8.3%;height:10.4%"></a>
       <a class="hit" href="index.html" aria-label="Home" style="left:27.2%;top:4.8%;width:3.6%;height:5.9%"></a>
       <a class="hit" href="books.html" aria-label="Books" style="left:32.7%;top:4.8%;width:5.1%;height:5.9%"></a>
@@ -70,9 +72,9 @@
       <span class="mockup-marker" data-mockup-group="main-unshakable" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:28.7%;top:23.5%;width:19.4%;height:32.8%"></span>
       <span class="mockup-marker" data-mockup-group="main-beginners" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:48.5%;top:23.5%;width:20.2%;height:32.8%"></span>
       <span class="mockup-marker" data-mockup-group="main-experts" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:70.4%;top:23.5%;width:20%;height:32.8%"></span>
-      <span class="mockup-marker" data-mockup-group="books-unshakable" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:3%;top:76.4%;width:14.2%;height:15.8%"></span>
-      <span class="mockup-marker" data-mockup-group="books-beginners" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:33.5%;top:76.4%;width:14.2%;height:15.8%"></span>
-      <span class="mockup-marker" data-mockup-group="books-experts" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:64%;top:76.4%;width:14.4%;height:15.8%"></span>
+      <span class="mockup-marker" data-mockup-group="books-unshakable" data-approved-group="unshakable" data-approved-asset="assets/approved-our-books-unshakable.png" data-source-rect="48 716 242 156" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:3%;top:76.4%;width:14.2%;height:15.8%"></span>
+      <span class="mockup-marker" data-mockup-group="books-beginners" data-approved-group="beginners" data-approved-asset="assets/approved-our-books-beginners.png" data-source-rect="558 716 242 156" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:33.5%;top:76.4%;width:14.2%;height:15.8%"></span>
+      <span class="mockup-marker" data-mockup-group="books-experts" data-approved-group="experts" data-approved-asset="assets/approved-our-books-experts.png" data-source-rect="1070 716 242 156" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:64%;top:76.4%;width:14.4%;height:15.8%"></span>
       <span class="stage-marker" data-stage-elements="pedestal glow shadow" style="left:24%;top:48.6%;width:72.2%;height:14%"></span>
       <span class="our-books-marker" data-our-books-section style="left:2.8%;top:72.6%;width:94.3%;height:20.1%"></span>
       <form class="overlay-form desktop-newsletter" data-email-form data-form-type="newsletter" action="https://formsubmit.co/" method="post">
@@ -97,9 +99,9 @@
       <span class="mockup-marker" data-mockup-group="mobile-main-unshakable" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:34%;top:20%;width:18%;height:14%"></span>
       <span class="mockup-marker" data-mockup-group="mobile-main-beginners" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:52%;top:20%;width:20%;height:14%"></span>
       <span class="mockup-marker" data-mockup-group="mobile-main-experts" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:73%;top:20%;width:21%;height:14%"></span>
-      <span class="mockup-marker" data-mockup-group="mobile-books-unshakable" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone shadow" style="left:10%;top:43%;width:32%;height:12%"></span>
-      <span class="mockup-marker" data-mockup-group="mobile-books-beginners" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone shadow" style="left:10%;top:58%;width:32%;height:12%"></span>
-      <span class="mockup-marker" data-mockup-group="mobile-books-experts" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone shadow" style="left:10%;top:73%;width:32%;height:12%"></span>
+      <span class="mockup-marker approved-mobile-group" data-mockup-group="mobile-books-unshakable" data-approved-group="unshakable" data-approved-asset="assets/approved-our-books-unshakable.png" data-source-rect="48 716 242 156" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:8%;top:42.4%;width:34%;height:13.7%"><img src="assets/approved-our-books-unshakable.png" width="242" height="156" alt="" aria-hidden="true"></span>
+      <span class="mockup-marker approved-mobile-group" data-mockup-group="mobile-books-beginners" data-approved-group="beginners" data-approved-asset="assets/approved-our-books-beginners.png" data-source-rect="558 716 242 156" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:8%;top:57.5%;width:34%;height:13.7%"><img src="assets/approved-our-books-beginners.png" width="242" height="156" alt="" aria-hidden="true"></span>
+      <span class="mockup-marker approved-mobile-group" data-mockup-group="mobile-books-experts" data-approved-group="experts" data-approved-asset="assets/approved-our-books-experts.png" data-source-rect="1070 716 242 156" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:8%;top:72.5%;width:34%;height:13.7%"><img src="assets/approved-our-books-experts.png" width="242" height="156" alt="" aria-hidden="true"></span>
       <span class="stage-marker" data-stage-elements="pedestal glow shadow" style="left:31%;top:25%;width:65%;height:12%"></span>
       <span class="our-books-marker" data-our-books-section style="left:4%;top:38.8%;width:92%;height:47.5%"></span>
       <form class="overlay-form mobile-newsletter" data-email-form data-form-type="newsletter" action="https://formsubmit.co/" method="post">
