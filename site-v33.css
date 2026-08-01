@@ -81,3 +81,19 @@
 .detail-visual.approved-mockup-stage .approved-mockup-image{width:min(100%,520px)!important}
 @media(max-width:900px){.approved-mockup-stage{padding:18px!important}.detail-visual.approved-mockup-stage{padding:26px!important}}
 @media(max-width:480px){.approved-mockup-stage{padding:16px!important}.detail-visual.approved-mockup-stage{padding:20px!important}.detail-visual.approved-mockup-stage .approved-mockup-image{width:100%!important}}
+
+/* V35 — the lossless 8K device sources used to compose the approved desktop
+   Our Books artwork. Stage effects stay resolution independent, while every
+   source image keeps its native proportions and is contained without filters. */
+.source-mockup-stage{position:relative!important;isolation:isolate;overflow:hidden!important;padding:20px!important;display:flex!important;align-items:center!important;justify-content:center!important;background:linear-gradient(180deg,#081828,#061421)!important}
+.source-mockup-stage .mockup-glow,.source-mockup-stage .mockup-pedestal,.source-mockup-stage .mockup-shadow{position:absolute;display:block;pointer-events:none}
+.source-mockup-stage .mockup-glow{z-index:0;left:3%;right:3%;top:3%;bottom:3%;background:radial-gradient(ellipse at 50% 62%,rgba(16,124,255,.34) 0,rgba(7,77,179,.16) 38%,rgba(4,22,42,0) 74%)}
+.source-mockup-stage .mockup-pedestal{z-index:1;left:4%;right:4%;bottom:4%;height:22%;overflow:hidden;border:1px solid rgba(89,179,255,.84);border-radius:50%;background:radial-gradient(ellipse at 50% 12%,rgba(56,165,255,.58) 0,rgba(9,75,144,.4) 34%,rgba(2,18,36,.96) 72%),linear-gradient(180deg,rgba(20,119,225,.44),rgba(1,9,18,.96));box-shadow:0 0 13px rgba(17,122,255,.75),inset 0 2px 4px rgba(91,198,255,.68)}
+.source-mockup-stage .mockup-pedestal::before{content:"";position:absolute;left:2%;right:2%;top:4%;height:20%;border-radius:50%;border-top:2px solid rgba(122,217,255,.96);box-shadow:0 -1px 6px #0a7dff}
+.source-mockup-stage .mockup-pedestal::after{content:"";position:absolute;left:8%;right:8%;bottom:12%;height:3px;border-radius:3px;background:repeating-linear-gradient(90deg,#51c5ff 0 3%,transparent 3% 9%);filter:none;box-shadow:0 0 5px #0a7dff}
+.source-mockup-stage .mockup-shadow{z-index:2;left:15%;right:15%;bottom:13%;height:10%;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.84) 0,rgba(0,0,0,.44) 48%,transparent 76%)}
+.source-mockup-stage .source-mockup-image{position:relative!important;z-index:3!important;display:block!important;width:88%!important;height:86%!important;max-width:88%!important;max-height:86%!important;object-fit:contain!important;object-position:center center!important;aspect-ratio:auto!important;margin:auto!important;transform:none!important;filter:none!important;image-rendering:auto}
+.detail-visual.source-mockup-stage{padding:34px!important}
+.detail-visual.source-mockup-stage .source-mockup-image{width:92%!important;height:88%!important;max-width:92%!important;max-height:88%!important}
+@media(max-width:900px){.source-mockup-stage{padding:18px!important}.source-mockup-stage .source-mockup-image{width:90%!important;height:86%!important;max-width:90%!important;max-height:86%!important}.detail-visual.source-mockup-stage{padding:26px!important}.detail-visual.source-mockup-stage .source-mockup-image{width:90%!important;height:86%!important;max-width:90%!important;max-height:86%!important}}
+@media(max-width:480px){.source-mockup-stage{padding:16px!important}.source-mockup-stage .source-mockup-image{width:90%!important;height:84%!important;max-width:90%!important;max-height:84%!important}.detail-visual.source-mockup-stage{padding:20px!important}.detail-visual.source-mockup-stage .source-mockup-image{width:88%!important;height:84%!important;max-width:88%!important;max-height:84%!important}}
