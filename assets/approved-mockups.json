@@ -1,0 +1,32 @@
+{
+  "source": "assets/homepage-approved-v33.png",
+  "sourceSha256": "9ac8fe969544201e084a3e862d4d21632855bb9003e38cfa53019579a9f35da3",
+  "sourceWidth": 1672,
+  "sourceHeight": 941,
+  "groups": {
+    "unshakable": {
+      "asset": "assets/approved-our-books-unshakable.png",
+      "assetSha256": "88242e5016f228c55ec94ef590d10510c3ddb6a92d92d4f59e5654f52924ab54",
+      "x": 48,
+      "y": 716,
+      "width": 242,
+      "height": 156
+    },
+    "beginners": {
+      "asset": "assets/approved-our-books-beginners.png",
+      "assetSha256": "7c7c8fe037d8b084216a32f5037baebf562016000a15311564a23179918df35d",
+      "x": 558,
+      "y": 716,
+      "width": 242,
+      "height": 156
+    },
+    "experts": {
+      "asset": "assets/approved-our-books-experts.png",
+      "assetSha256": "1c0960121830223fd11950b6cb9a19c16d749e3eff4123d3e8d5acff9553eb1e",
+      "x": 1070,
+      "y": 716,
+      "width": 242,
+      "height": 156
+    }
+  }
+}
