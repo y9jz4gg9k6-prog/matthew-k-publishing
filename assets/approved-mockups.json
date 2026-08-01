@@ -7,6 +7,10 @@
     "unshakable": {
       "asset": "assets/approved-our-books-unshakable.png",
       "assetSha256": "88242e5016f228c55ec94ef590d10510c3ddb6a92d92d4f59e5654f52924ab54",
+      "highResolutionAsset": "assets/homepage-mockup-unshakable-card-8k.png",
+      "highResolutionAssetSha256": "b97142a6117826fc42e376d66ee7c660c09066fb0450b20b55a151fceafdf1ba",
+      "highResolutionWidth": 7680,
+      "highResolutionHeight": 6871,
       "x": 48,
       "y": 716,
       "width": 242,
@@ -15,6 +19,10 @@
     "beginners": {
       "asset": "assets/approved-our-books-beginners.png",
       "assetSha256": "7c7c8fe037d8b084216a32f5037baebf562016000a15311564a23179918df35d",
+      "highResolutionAsset": "assets/homepage-mockup-beginners-card-8k.png",
+      "highResolutionAssetSha256": "e2e0dc51419668a324d66f297d2fab85392bfd021033d1ee4a1fb643327f23c6",
+      "highResolutionWidth": 7680,
+      "highResolutionHeight": 6761,
       "x": 558,
       "y": 716,
       "width": 242,
@@ -23,6 +31,10 @@
     "experts": {
       "asset": "assets/approved-our-books-experts.png",
       "assetSha256": "1c0960121830223fd11950b6cb9a19c16d749e3eff4123d3e8d5acff9553eb1e",
+      "highResolutionAsset": "assets/homepage-mockup-experts-card-8k.png",
+      "highResolutionAssetSha256": "28d23d1e534111a192a70ff338b412a49c5d1272aae147c2cd3819b16a3495e2",
+      "highResolutionWidth": 7680,
+      "highResolutionHeight": 6970,
       "x": 1070,
       "y": 716,
       "width": 242,
