@@ -1,0 +1,14 @@
+{
+  "name": "matthew-k-publishing",
+  "version": "33.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "description": "Matthew K Publishing static website and Chromium quality checks",
+  "scripts": {
+    "test": "pnpm run test:chromium",
+    "test:chromium": "node tests/e2e.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.61.1"
+  }
+}
