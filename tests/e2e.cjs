@@ -470,10 +470,13 @@ async function run() {
           try {
             const response = await page.goto(`${baseURL}${entry.path}`, { waitUntil: 'networkidle' });
             assert.equal(response.status(), 200, `${label} did not load successfully`);
-            const imageCount = await page.locator('img').count();
-            for (let imageIndex = 0; imageIndex < imageCount; imageIndex += 1) {
-              await page.locator('img').nth(imageIndex).evaluate(image => image.decode());
-            }
+            await page.locator('img').evaluateAll(images => Promise.all(images.map(image => {
+              if (image.complete) return undefined;
+              return new Promise(resolve => {
+                image.addEventListener('load', resolve, { once: true });
+                image.addEventListener('error', resolve, { once: true });
+              });
+            })));
             const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
             assert.ok(overflow <= 0, `${label} has ${overflow}px of horizontal overflow`);
             await assertInternalLinks(page, baseURL);
