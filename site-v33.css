@@ -57,3 +57,18 @@
 @media(max-width:480px){.mockup-box{padding:14px!important}.mockup-box img{width:94%!important;height:94%!important;max-width:94%!important;max-height:94%!important}.detail-visual{padding:18px!important}.detail-visual img{width:94%!important;height:94%!important;max-width:94%!important;max-height:94%!important}}
 
 .detail-actions{display:flex;gap:12px;flex-wrap:wrap}
+
+/* V34 — complete source mockups with measurable, in-bounds stage effects. */
+.mockup-stage{position:relative!important;isolation:isolate;overflow:hidden!important;background:linear-gradient(180deg,#081828,#061421)!important}
+.mockup-stage .mockup-glow,.mockup-stage .mockup-pedestal,.mockup-stage .mockup-shadow{position:absolute;display:block;pointer-events:none}
+.mockup-stage .mockup-glow{z-index:0;left:3%;right:3%;top:7%;bottom:6%;background:radial-gradient(ellipse at 50% 62%,rgba(16,124,255,.34) 0,rgba(7,77,179,.16) 38%,rgba(4,22,42,0) 74%)}
+.mockup-stage .mockup-pedestal{z-index:1;left:4%;right:4%;bottom:4%;height:22%;border:1px solid rgba(89,179,255,.72);border-radius:50%;background:radial-gradient(ellipse at 50% 12%,rgba(56,165,255,.55) 0,rgba(9,75,144,.38) 34%,rgba(2,18,36,.94) 72%),linear-gradient(180deg,rgba(20,119,225,.42),rgba(1,9,18,.94));overflow:hidden}
+.mockup-stage .mockup-pedestal::after{content:"";position:absolute;left:7%;right:7%;top:8%;height:18%;border-radius:50%;background:linear-gradient(90deg,transparent,rgba(118,211,255,.92),transparent)}
+.mockup-stage .mockup-shadow{z-index:2;left:14%;right:14%;bottom:13%;height:11%;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.82) 0,rgba(0,0,0,.42) 48%,transparent 76%)}
+.mockup-stage .mockup-image{position:relative!important;z-index:3!important;display:block!important;width:94%!important;height:88%!important;max-width:94%!important;max-height:88%!important;object-fit:contain!important;object-position:center center!important;aspect-ratio:auto!important;margin:auto!important;transform:none!important;filter:none!important}
+.detail-visual.mockup-stage .mockup-glow{left:5%;right:5%;top:4%;bottom:5%}
+.detail-visual.mockup-stage .mockup-pedestal{left:6%;right:6%;bottom:4%;height:20%}
+.detail-visual.mockup-stage .mockup-shadow{left:16%;right:16%;bottom:12%;height:10%}
+.detail-visual.mockup-stage .mockup-image{width:92%!important;height:90%!important;max-width:92%!important;max-height:90%!important}
+@media(max-width:900px){.mockup-stage .mockup-image{width:92%!important;height:88%!important;max-width:92%!important;max-height:88%!important}.detail-visual.mockup-stage .mockup-image{width:90%!important;height:88%!important;max-width:90%!important;max-height:88%!important}}
+@media(max-width:480px){.mockup-stage .mockup-pedestal{left:5%;right:5%;bottom:4%;height:21%}.mockup-stage .mockup-image{width:90%!important;height:86%!important;max-width:90%!important;max-height:86%!important}.detail-visual.mockup-stage .mockup-image{width:88%!important;height:86%!important;max-width:88%!important;max-height:86%!important}}

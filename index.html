@@ -19,10 +19,10 @@
     .reference > img { display: block; width: 100%; height: auto; }
     .desktop-ref { width: min(100vw, 1672px); }
     .mobile-ref { display: none; width: min(100vw, 864px); }
-    .hit, .mockup-marker { position: absolute; display: block; z-index: 5; border: 0; background: transparent; padding: 0; }
+    .hit, .mockup-marker, .stage-marker, .our-books-marker { position: absolute; display: block; z-index: 5; border: 0; background: transparent; padding: 0; }
     .hit { cursor: pointer; }
     .hit:focus-visible { outline: 2px solid #60a9ff; outline-offset: 2px; border-radius: 8px; }
-    .mockup-marker { z-index: 1; pointer-events: none; }
+    .mockup-marker, .stage-marker, .our-books-marker { z-index: 1; pointer-events: none; }
     .menu-panel { position: absolute; z-index: 40; display: none; width: 230px; padding: 10px; background: rgba(5, 15, 27, .99); border: 1px solid rgba(76, 143, 230, .34); border-radius: 12px; box-shadow: 0 18px 50px rgba(0, 0, 0, .6); line-height: 1.2; }
     .menu-panel.show { display: block; }
     .menu-panel a { display: block; color: #eef5ff; padding: 11px 12px; border-radius: 8px; font-size: 14px; font-weight: 700; }
@@ -67,12 +67,14 @@
       <a class="hit" href="https://www.amazon.com/dp/B0FK282SLG" target="_blank" rel="noopener noreferrer sponsored" aria-label="Buy Unshakable on Amazon" style="left:18%;top:86.9%;width:10.1%;height:4.8%"></a>
       <a class="hit" href="https://www.amazon.com/dp/B0FKM9G74H" target="_blank" rel="noopener noreferrer sponsored" aria-label="Buy Prompt Engineering for Beginners on Amazon" style="left:48%;top:86.9%;width:10.2%;height:4.8%"></a>
       <a class="hit" href="https://www.amazon.com/dp/B0GJPYBV4B" target="_blank" rel="noopener noreferrer sponsored" aria-label="Buy Prompt Engineering for Experts on Amazon" style="left:79%;top:86.9%;width:10.2%;height:4.8%"></a>
-      <span class="mockup-marker" data-mockup-group="main-unshakable" data-devices="hardcover ipad iphone" style="left:28.7%;top:23.5%;width:19.4%;height:32.8%"></span>
-      <span class="mockup-marker" data-mockup-group="main-beginners" data-devices="hardcover ipad iphone" style="left:48.5%;top:23.5%;width:20.2%;height:32.8%"></span>
-      <span class="mockup-marker" data-mockup-group="main-experts" data-devices="hardcover ipad iphone" style="left:70.4%;top:23.5%;width:20%;height:32.8%"></span>
-      <span class="mockup-marker" data-mockup-group="books-unshakable" data-devices="hardcover ipad iphone" style="left:3%;top:76.4%;width:14.2%;height:15.8%"></span>
-      <span class="mockup-marker" data-mockup-group="books-beginners" data-devices="hardcover ipad iphone" style="left:33.5%;top:76.4%;width:14.2%;height:15.8%"></span>
-      <span class="mockup-marker" data-mockup-group="books-experts" data-devices="hardcover ipad iphone" style="left:64%;top:76.4%;width:14.4%;height:15.8%"></span>
+      <span class="mockup-marker" data-mockup-group="main-unshakable" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:28.7%;top:23.5%;width:19.4%;height:32.8%"></span>
+      <span class="mockup-marker" data-mockup-group="main-beginners" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:48.5%;top:23.5%;width:20.2%;height:32.8%"></span>
+      <span class="mockup-marker" data-mockup-group="main-experts" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:70.4%;top:23.5%;width:20%;height:32.8%"></span>
+      <span class="mockup-marker" data-mockup-group="books-unshakable" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:3%;top:76.4%;width:14.2%;height:15.8%"></span>
+      <span class="mockup-marker" data-mockup-group="books-beginners" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:33.5%;top:76.4%;width:14.2%;height:15.8%"></span>
+      <span class="mockup-marker" data-mockup-group="books-experts" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone pedestal glow shadow" style="left:64%;top:76.4%;width:14.4%;height:15.8%"></span>
+      <span class="stage-marker" data-stage-elements="pedestal glow shadow" style="left:24%;top:48.6%;width:72.2%;height:14%"></span>
+      <span class="our-books-marker" data-our-books-section style="left:2.8%;top:72.6%;width:94.3%;height:20.1%"></span>
       <form class="overlay-form desktop-newsletter" data-email-form data-form-type="newsletter" action="https://formsubmit.co/" method="post">
         <label class="sr-only" for="desktopEmail">Email address</label><input id="desktopEmail" name="email" type="email" required autocomplete="email" placeholder="Your email address"><button type="submit">Subscribe</button><p class="form-status" aria-live="polite"></p>
       </form>
@@ -92,12 +94,14 @@
       <a class="hit" href="https://www.amazon.com/dp/B0FK282SLG" target="_blank" rel="noopener noreferrer sponsored" aria-label="Buy Unshakable on Amazon" style="left:46%;top:52.8%;width:36%;height:3.4%"></a>
       <a class="hit" href="https://www.amazon.com/dp/B0FKM9G74H" target="_blank" rel="noopener noreferrer sponsored" aria-label="Buy Prompt Engineering for Beginners on Amazon" style="left:46%;top:67.8%;width:36%;height:3.4%"></a>
       <a class="hit" href="https://www.amazon.com/dp/B0GJPYBV4B" target="_blank" rel="noopener noreferrer sponsored" aria-label="Buy Prompt Engineering for Experts on Amazon" style="left:46%;top:82.4%;width:36%;height:3.4%"></a>
-      <span class="mockup-marker" data-mockup-group="mobile-main-unshakable" data-devices="hardcover ipad iphone" style="left:34%;top:20%;width:18%;height:14%"></span>
-      <span class="mockup-marker" data-mockup-group="mobile-main-beginners" data-devices="hardcover ipad iphone" style="left:52%;top:20%;width:20%;height:14%"></span>
-      <span class="mockup-marker" data-mockup-group="mobile-main-experts" data-devices="hardcover ipad iphone" style="left:73%;top:20%;width:21%;height:14%"></span>
-      <span class="mockup-marker" data-mockup-group="mobile-books-unshakable" data-devices="hardcover ipad iphone" style="left:10%;top:43%;width:32%;height:12%"></span>
-      <span class="mockup-marker" data-mockup-group="mobile-books-beginners" data-devices="hardcover ipad iphone" style="left:10%;top:58%;width:32%;height:12%"></span>
-      <span class="mockup-marker" data-mockup-group="mobile-books-experts" data-devices="hardcover ipad iphone" style="left:10%;top:73%;width:32%;height:12%"></span>
+      <span class="mockup-marker" data-mockup-group="mobile-main-unshakable" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:34%;top:20%;width:18%;height:14%"></span>
+      <span class="mockup-marker" data-mockup-group="mobile-main-beginners" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:52%;top:20%;width:20%;height:14%"></span>
+      <span class="mockup-marker" data-mockup-group="mobile-main-experts" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone" style="left:73%;top:20%;width:21%;height:14%"></span>
+      <span class="mockup-marker" data-mockup-group="mobile-books-unshakable" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone shadow" style="left:10%;top:43%;width:32%;height:12%"></span>
+      <span class="mockup-marker" data-mockup-group="mobile-books-beginners" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone shadow" style="left:10%;top:58%;width:32%;height:12%"></span>
+      <span class="mockup-marker" data-mockup-group="mobile-books-experts" data-devices="hardcover ipad iphone" data-elements="hardcover ipad iphone shadow" style="left:10%;top:73%;width:32%;height:12%"></span>
+      <span class="stage-marker" data-stage-elements="pedestal glow shadow" style="left:31%;top:25%;width:65%;height:12%"></span>
+      <span class="our-books-marker" data-our-books-section style="left:4%;top:38.8%;width:92%;height:47.5%"></span>
       <form class="overlay-form mobile-newsletter" data-email-form data-form-type="newsletter" action="https://formsubmit.co/" method="post">
         <label class="sr-only" for="mobileEmail">Email address</label><input id="mobileEmail" name="email" type="email" required autocomplete="email" placeholder="Your email address"><button type="submit">Subscribe</button><p class="form-status" aria-live="polite"></p>
       </form>

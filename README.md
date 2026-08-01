@@ -12,4 +12,4 @@ pnpm exec playwright install chromium
 pnpm run test:chromium
 ```
 
-The suite audits layout overflow, internal links, images, console errors, navigation, forms, and full mockup visibility. It writes desktop and mobile full-page screenshots for every navigable page to `test-results/screenshots/`.
+The suite audits desktop, tablet, and mobile layout overflow, internal links, images, console errors, navigation, forms, source transparency, and full mockup/stage bounding-box containment. It writes full-page screenshots for every navigable page plus focused desktop and mobile Our Books screenshots to `test-results/screenshots/`.
